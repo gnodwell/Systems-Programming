@@ -1,0 +1,77 @@
+##
+##	Makefile for dynamic loader project
+##
+
+##
+##	Variables
+##	---------
+##
+
+BOXDLL	= box.dll
+BOXLIB	= box.lib
+BOXEXP	= box.exp
+BOXOBJS	= box.obj
+
+PARENDLL	= paren.dll
+PARENLIB	= paren.lib
+PARENEXP	= paren.exp
+PARENOBJS	= paren.obj
+
+SHOUTDLL	= shout.dll
+SHOUTLIB	= shout.lib
+SHOUTEXP	= shout.exp
+SHOUTOBJS	= shout.obj
+
+# Macros for compiling
+CC		= cl
+CFLAGS	= -I..\src-main
+
+# Libs that need to be linked
+LDFLAGS	=
+LDLIBS =
+
+
+
+##
+##	Build Targets
+##	-------------
+##
+
+# Default target: build everything
+libs: $(BOXLIB) $(PARENLIB) $(SHOUTLIB)
+
+
+# For each library we must link it to create the DLL,
+# and call icacls to update system permissions to allow
+# it to be loaded and used.  As we want to load it from
+# the "modules" directory within the parent, we copy
+# the library there prior to running icacls on the
+# result.  Any update to the file (such as a copy) will
+# reset the permissions icacls is setting, so this must
+# be the last step.
+$(BOXLIB) $(BOXDLL):	$(BOXOBJS)
+	link /dll /OUT:$(BOXDLL) $(BOXOBJS)
+	copy $(BOXDLL) ..\modules
+	icacls ..\modules\$(BOXDLL) /grant Everyone:RX
+
+$(PARENLIB) $(PARENDLL):	$(PARENOBJS)
+	link /dll /OUT:$(PARENDLL) $(PARENOBJS)
+	copy $(PARENDLL) ..\modules
+	icacls ..\modules\$(PARENDLL) /grant Everyone:RX
+
+$(SHOUTLIB) $(SHOUTDLL):	$(SHOUTOBJS)
+	link /dll /OUT:$(SHOUTDLL) $(SHOUTOBJS)
+	copy $(SHOUTDLL) ..\modules
+	icacls ..\modules\$(SHOUTDLL) /grant Everyone:RX
+
+##
+##	Cleanup Targets
+##	---------------
+##
+
+clean :
+	- del $(BOXLIB) $(PARENLIB) $(SHOUTLIB)
+	- del $(BOXEXP) $(PARENEXP) $(SHOUTEXP)
+	- del $(BOXDLL) $(PARENDLL) $(SHOUTDLL)
+	- del $(BOXOBJS) $(PARENOBJS) $(SHOUTOBJS)
+

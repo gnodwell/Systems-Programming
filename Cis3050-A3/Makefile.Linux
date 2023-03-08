@@ -1,0 +1,18 @@
+##
+##	Makefile for top-level module formatter project.
+##  This makefile simply calls the lower level makefiles
+##
+
+
+all world : dummy
+	( cd "src-main" ; make -f Makefile.Linux ) ; \
+	( cd "src-modules" ; make -f Makefile.Linux )
+
+clean : dummy
+	SCRIPTDIR=`pwd`; \
+	( cd "src-main" ; make -f Makefile.Linux clean ) ; \
+	( cd "src-modules" ; make -f Makefile.Linux clean )
+
+dummy :
+
+

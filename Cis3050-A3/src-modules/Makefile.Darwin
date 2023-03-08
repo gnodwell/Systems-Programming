@@ -1,0 +1,36 @@
+
+#
+# Makefile specific to the Darwin/MacOSX environment
+#
+
+CC		= cc
+CFLAGS	= -g -fPIC -I../src-main
+
+LIB_PAREN	= ../modules/paren.so
+OBJ_PAREN	= paren.o 
+
+LIB_BOX	= ../modules/box.so
+OBJ_BOX	= box.o 
+
+LIB_SHOUT	= ../modules/shout.so
+OBJ_SHOUT	= shout.o 
+
+LIBS = $(LIB_PAREN) $(LIB_BOX) $(LIB_SHOUT)
+OBJS = $(OBJ_PAREN) $(OBJ_BOX) $(OBJ_SHOUT)
+
+## Build everything by default
+all world : $(LIBS)
+
+$(LIB_PAREN):	$(OBJ_PAREN)
+	$(CC) -dynamiclib -Wl,-dylib,-o,$(LIB_PAREN) $(OBJ_PAREN)
+
+$(LIB_BOX):	$(OBJ_BOX)
+	$(CC) -dynamiclib -Wl,-dylib,-o,$(LIB_BOX) $(OBJ_BOX)
+
+$(LIB_SHOUT):	$(OBJ_SHOUT)
+	$(CC) -dynamiclib -Wl,-dylib,-o,$(LIB_SHOUT) $(OBJ_SHOUT)
+
+clean:
+	- rm -f $(LIBS)
+	- rm -f $(OBJS)
+

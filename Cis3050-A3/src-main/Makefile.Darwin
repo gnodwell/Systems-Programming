@@ -1,0 +1,10 @@
+
+#
+# Makefile specific to the Linux environment
+#
+
+## include the base makefile, taking all of the default definitions
+include Makefile.Common
+
+## We change nothing, so we are done
+

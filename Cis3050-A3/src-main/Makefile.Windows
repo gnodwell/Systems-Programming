@@ -1,0 +1,48 @@
+##
+##	Makefile for file locker
+##
+
+
+##
+##	Variables
+##	---------
+##
+
+EXE	= ..\formatLines.exe
+
+# List of all of the object files in your project
+MYOBJS = \
+        mainline.obj \
+        module_processing.obj \
+        string_tools.obj
+
+CC		= cl
+
+# Flags for compiling
+CFLAGS	= 
+
+# Libs that need to be linked
+LDFLAGS	= 
+LDLIBS =
+
+
+##
+##	Build Targets
+##	-------------
+##
+
+# Default target - build the program
+$(EXE) exe : $(MYOBJS)
+	$(CC) $(CFLAGS) $(MYOBJS) /link /out:$(EXE) $(LDFLAGS) $(LDLIBS)
+	icacls $(EXE) /grant Everyone:RX
+
+##
+##	Cleanup Targets
+##	---------------
+##
+
+clean :
+	- del /f $(EXE)
+	- del /f $(MYOBJS)
+	- del /f *.pdb
+
