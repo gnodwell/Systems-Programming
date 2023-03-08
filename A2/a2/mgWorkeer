@@ -1,0 +1,56 @@
+#!/bin/bash
+
+#
+# This program is part of the Mini Grid system.  This code runs
+# as each of the workers in the system, accepting and running tasks
+#
+
+### Code safety standards
+# -u : tell bash to fail if any variable is not set
+# -e : tell bash to fail if any command fails (unless in an if)
+# -o pipefail : tell bash to fail if part of a pipe fails (needs -e)
+set -e
+set -u
+set -o pipefail
+
+umask 0077
+
+
+#Global Varaibles
+FIFO_W_STEM="/tmp/worker-${USER}-inputfifo"
+FIFO_S="/tmp/server-${USER}-inputfifo"
+
+ID=$1
+
+if [ ! -p $FIFO_W_STEM-$ID ]; then
+    echo "Worker: The FIFO ${FIFO_W_STEM-$ID} does not exist"
+    exit 1
+fi
+
+while read line < $FIFO_W_STEM-$ID
+do
+
+    if [ "$line" != 'shutdown' ]; then
+        echo $line >> /tmp/worker-$USER.${ID}.log
+        $line >> /tmp/worker-$USER.${ID}.log
+        echo " " >> /tmp/worker-$USER.${ID}.log
+        echo "DONE : Process $ID : $line" > $FIFO_S
+    fi
+
+    if [ "$line" = 'shutdown' ]
+    then 
+        break
+    fi
+
+done
+
+
+echo "Worker $ID: Reader is exiting"
+
+
+
+   
+
+
+
+

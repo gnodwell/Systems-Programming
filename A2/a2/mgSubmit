@@ -1,0 +1,81 @@
+#!/bin/bash
+
+#
+# This program is part of the Mini Grid system.  It allows nicer
+# submission of tasks to the system.
+#
+
+### Code safety standards
+# -u : tell bash to fail if any variable is not set
+# -e : tell bash to fail if any command fails (unless in an if)
+# -o pipefail : tell bash to fail if part of a pipe fails (needs -e)
+set -e
+set -u
+set -o pipefail
+
+umask 0077
+
+# use the same FIFO that the server will listen on
+SERVER_FIFO="/tmp/server-${USER}-inputfifo"
+
+
+if [ ! -p $SERVER_FIFO ]; then
+    echo "The FIFO $SERVER_FIFO does not exist"
+    exit 1
+fi
+
+
+# First, handle the '-x' and '-s' options -- if they are present,
+# then send the appropriate command and then exit
+xFlag=0
+sFlag=0
+
+for arg in $@
+do
+    if [ $arg = "-x" ]; then
+        xFlag=1
+
+    fi
+    if [ $arg = "-s" ]; then
+        sFlag=1
+    fi
+
+done
+
+# Now, take the command line we have been given and
+# send it to the server
+
+fullCommand=""
+counter=0
+
+for arg in $@
+do
+    {
+        if [ $xFlag = 1 ]; then
+            xFlag=0
+            fullCommand="shutdown"
+        fi
+        if [ $sFlag = 1 ]; then
+            sFlag=0
+            fullCommand="status"
+        fi
+        if [ $arg != "-x" ]; then
+            if [ $arg != "-s" ]; then
+                if [ $counter =  0 ]; then
+                    fullCommand="${fullCommand}${arg}"
+                    let "counter+=1"
+                else
+                    fullCommand="${fullCommand} ${arg}"
+                fi
+            fi
+        fi
+
+        
+    }
+
+done
+sleep 1
+echo $fullCommand > $SERVER_FIFO
+
+
+

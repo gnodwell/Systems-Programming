@@ -1,0 +1,47 @@
+#!/bin/bash
+
+
+#first test case
+echo echo hello world > /tmp/server-${USER}-inputfifo
+./mgSubmit ls -l
+
+
+#second test case
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 10
+./mgSubmit ./timedCountdown 15
+./mgSubmit ./timedCountdown 15
+./mgSubmit ./timedCountdown 15
+
+./mgSubmit -s
+sleep 5
+
+./mgSubmit -s
+sleep 5
+
+./mgSubmit -s
+sleep 5
+
+./mgSubmit -s
+sleep 5
+
+./mgSubmit -x

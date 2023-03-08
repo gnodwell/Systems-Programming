@@ -1,0 +1,200 @@
+#!/bin/bash
+
+#
+# This program is part of the Mini Grid system.  It forms the server
+# that accepts tasks and issues them to workers.
+#
+
+### Code safety standards
+# -u : tell bash to fail if any variable is not set
+# -e : tell bash to fail if any command fails (unless in an if)
+# -o pipefail : tell bash to fail if part of a pipe fails (needs -e)
+set -e
+set -u
+set -o pipefail
+umask 0077
+
+
+# set up some globals
+FIFO_S="/tmp/server-${USER}-inputfifo"
+FIFO_W_STEM="/tmp/worker-${USER}-inputfifo"
+
+#declare -a busyWorkers
+#create FIFOs
+trap "rm -f $FIFO_S $FIFO_W_STEM*; exit 0" 0 1 2 15
+
+
+if [ ! -p $FIFO_S ]; then
+    mkfifo $FIFO_S
+fi
+# calculate default number of workers
+
+OS=`uname -a`
+
+if [[ "$OS" == *"Linux"* ]]
+then
+    totalCPUs=`nproc --all`
+elif [[ "$OS" == *"Darwin"* ]]
+then
+    totalCPUs=`sysctl -a | grep machdep.cpu.core_count | tr ": " "\n" | tail -1`
+fi
+
+
+
+
+
+
+echo "Starting up ${totalCPUs} processing units"
+echo "Ready for processing : place tasks into /tmp/server-gnodwell-inputfifo "
+
+for i in `seq 0 $totalCPUs`
+do
+    mkfifo $FIFO_W_STEM-$i
+    ./mgWorkeer $i &
+done
+
+
+
+procesesCompleted=0
+busyWorkers=()
+waitingList=()
+numWaitingProc=0
+numWaitingCompleted=0
+shutdownWait=0
+
+statusTasksProcessed=0
+
+
+while read line < $FIFO_S
+do
+    if [[ "$line" == *"DONE"* ]]
+    then
+        let "statusTasksProcessed+=1"
+        for i in `seq 1 $totalCPUs`
+        do
+            if [[ "$line" == *"Process $i"* ]]
+            then
+                #echo "I AM HERE"
+                if [ ${#waitingList[@]} -gt 0 ]
+                then
+                    echo "${waitingList[$numWaitingCompleted]}" > $FIFO_W_STEM-$i
+                    unset waitingList[$numWaitingCompleted]
+                    let 'numWaitingCompleted+=1'
+
+                else
+                    unset busyWorkers[$i]
+                fi
+            fi
+
+        done
+    elif [ "$line" = "status" ]
+    then
+        echo "Number of workers: $totalCPUs"
+        echo "Number of tasks processed: $statusTasksProcessed"
+
+        for i in `seq 1 $totalCPUs`
+        do
+            if [ ${#busyWorkers[@]} -gt 0 ]; then
+                if [[ ! " ${busyWorkers[*]} " =~ ${i} ]]; then
+                    echo "Worker $i: Idle"
+                else
+                    echo "Worker $i: Busy"
+                fi
+            else
+                echo "Worker $i: Idle"
+            fi
+        done
+
+    else
+
+        if [ "$line" != 'shutdown' ]; then
+            if [ ${#busyWorkers[@]} -lt ${totalCPUs} ] 
+            then 
+                for i in `seq 1 $totalCPUs`
+                do
+                    if [ ${#busyWorkers[@]} != 0 ]; then
+                        if [[ ! " ${busyWorkers[*]} " =~ ${i} ]]; then
+                            echo "$line" > $FIFO_W_STEM-$i
+                            busyWorkers+=([$i]=$i)
+                            break
+                        fi
+                    else 
+                        echo "$line" > $FIFO_W_STEM-1
+                        busyWorkers+=([$i]=$i)
+                        break
+                    fi
+                done
+            else
+                waitingList+=([$numWaitingProc]=$line)
+                let "numWaitingProc+=1"
+            fi
+        fi
+    fi
+
+    if [[ "$line" = 'shutdown' || $shutdownWait = 1 ]]
+    then
+        if [ ${#busyWorkers[@]} != 0 ]; then
+            shutdownWait=1
+        else
+            for i in `seq 1 $totalCPUs`
+            do
+                echo "shutdown" > $FIFO_W_STEM-$i
+            done
+            break
+        fi
+    fi
+done
+
+
+echo "Server is done reading"
+
+
+
+
+
+
+
+
+
+
+
+# process command line options (so that number of workers can be overridden)
+PRINT_HELP="NO"
+for arg in "$@"
+do
+	case "${arg}" in
+	-[h?]*)
+		PRINT_HELP="YES"
+		;;
+	-*)
+		echo "Unknown option '${arg}'" >&2
+        exit -1
+		;;
+	*)
+		echo "Unknown argument '${arg}'" >&2
+        exit -1
+		;;
+	esac
+done
+
+
+# if help was requested, print it to stderr and exit
+if [ X"$PRINT_HELP" = X"YES" ]
+then
+    echo "$0 <options>" >&2
+    echo "Option:" >&2
+    echo "-h    : help - this is it" >&2
+    echo "-n<N> : set the number of processing units to <N>" >&2
+    exit -1
+fi
+
+
+
+
+
+
+
+
+
+
+
