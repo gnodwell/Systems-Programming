@@ -1,0 +1,15 @@
+
+
+OBJS = lockRanger.c
+CFLAGS = -Wall
+CC = gcc
+
+lockRanger.o: lockRanger.c
+	$(CC) $(CFLAGS) $(OBJS) -o lockRanger
+
+
+clean:
+	rm *.o lockRanger
+
+
+
